@@ -1,9 +1,19 @@
+import os
 import sys
 import subprocess
 from gr8s.cli import CLIMenu
 from functools import partial
 from typing import Dict, List
 
+def read_from_fd(fd: int):
+    content = []
+    while True:
+        chunk = os.read(fd, 512)  # Read in chunks of 1024 bytes
+        if not chunk:  # If chunk is empty, EOF is reached
+            break
+        content.append(chunk)
+    
+    return b''.join(content).decode('utf-8')  # Join all chunks and decode to a string
 
 def substring(string: str, substrings: List[str]) -> bool:
     for ss in substrings:
@@ -22,14 +32,17 @@ def cli_mapper(cli_raw: str) -> Dict[str, str]:
 
 def display_cert(filepath: str) -> str:
     try:
-        result = subprocess.run(
-            ["openssl", "x509", "-in", filepath, '-text', '-noout' ],
-            capture_output=True, text=True
-        )
-        if result.returncode == 0:
-            return result.stdout
-        else:
-            return result.stderr
+        command = ["openssl", "x509", "-in", filepath, '-text', '-noout' ]
+        sp_out = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        out = "STDOUT recieved no output"
+        if sp_out.stderr is not None:
+            fd = sp_out.stderr.fileno()
+            out = read_from_fd(fd)
+            if out == "":
+                if sp_out.stdout is not None:
+                    fd = sp_out.stdout.fileno()
+                    out = read_from_fd(fd)
+        return out
     except Exception as e:
         return str(e)
 
@@ -50,7 +63,6 @@ def view_certs():
         menu_mapper[option] = c
 
     cm = CLIMenu(menu_mapper)
-    print("hi")
     cm.display()
 
     

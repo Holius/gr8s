@@ -9,6 +9,33 @@ class CLIMenu:
     def display(self):
         curses.wrapper(self.display_menu)
 
+    def display_scrollable_string(self, stdscr, long_string):
+        stdscr.clear()
+        max_y, max_x = stdscr.getmaxyx()
+
+        lines = long_string.splitlines()
+        num_lines = len(lines)
+        offset = 0  # Start at the top of the content
+
+        while True:
+            stdscr.clear()
+            # Display the visible portion of the content
+            for i in range(min(max_y - 1, num_lines - offset)):
+                stdscr.addstr(i, 0, lines[i + offset][:max_x])
+
+            stdscr.addstr(max_y - 1, 0, "Use arrow keys to scroll, 'q' to quit.")
+            stdscr.refresh()
+
+            key = stdscr.getch()
+
+            if (key == curses.KEY_DOWN or key == ord('j')) and offset < num_lines - (max_y - 1):
+                offset += 1  # Scroll down
+            elif (key == curses.KEY_UP or key == ord('k')) and offset > 0:
+                offset -= 1  # Scroll up
+            elif key == ord('q'):
+                break  # Exit the loop and end the program
+
+
     def display_menu(self, stdscr):
         curses.curs_set(0)  # Hide cursor
         current_selection = 0
@@ -34,17 +61,11 @@ class CLIMenu:
                 current_selection = (current_selection + 1) % len(self.options)
             elif key == curses.KEY_ENTER or key in [10, 13]:
                 selected_callable = self.callables[current_selection]
+
                 output: str = selected_callable()
                 if not output.endswith("\n"):
                     output += "\n"
-
-                stdscr.clear()
-                stdscr.addstr(output)
-                stdscr.addstr("Press any key to return to the menu.")
-                stdscr.refresh()
-                stdscr.getch()
-
-                # After displaying output, reset the previous selection
+                self.display_scrollable_string(stdscr, output)
                 prev_selection = -1
 
             elif key == ord('q'):
