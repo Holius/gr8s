@@ -25,8 +25,11 @@ def cli_mapper(cli_raw: str) -> Dict[str, str]:
     cli_arg_to_filepath = {}
     for t in cli_raw.split(" "):
         if t.startswith("--"):
-            cli_arg, path =t.split("=")
-            if substring(cli_arg, ["-ca", "cert", "key"]):
+            parts = t.split("=")
+            if len(parts) != 2:
+                continue
+            cli_arg, path =parts
+            if substring(cli_arg, ["-ca", "cert"]):
                 cli_arg_to_filepath[cli_arg.removeprefix("--")] = path
     return cli_arg_to_filepath
 
