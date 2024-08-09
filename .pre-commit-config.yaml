@@ -1,0 +1,16 @@
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.278  # Use the latest stable version of ruff
+    hooks:
+      - id: ruff
+
+  # TODO probably a dumb way to handle this
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright
+        entry: pyright
+        language: node
+        types: [python]
+        additional_dependencies: []
